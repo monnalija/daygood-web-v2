@@ -1,6 +1,128 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+import axios, { AxiosError, Method } from "axios";
+
+import moment from "moment";
+import { API_URL } from "./const";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
+
+// const API_URL = 'https://us-central1-daygood-4d579.cloudfunctions.net'
+
+export const IS_DEV = process.env["NODE_ENV"] === "development";
+
+const apiHandler = axios.create({
+  headers: {
+    Accept: "application/json",
+    "Content-type": "application/json",
+  },
+  validateStatus: (status) => status >= 200 && status < 300,
+});
+
+apiHandler.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // console.warn('[error][request]', error && error.response)
+    if (error && error.response) {
+      if (error.response.data) {
+        console.log("ws", error.response.data);
+      }
+    } else {
+      // showToast('네트워크 상태를 확인해주세요.')
+    }
+    throw error;
+  }
+);
+
+/**
+ * axios#request(config)
+ * axios#get(url[, config])
+ * axios#delete(url[, config])
+ * axios#head(url[, config])
+ * axios#options(url[, config])
+ * axios#post(url[, data[, config]])
+ * axios#put(url[, data[, config]])
+ * axios#patch(url[, data[, config]])
+ * axios#getUri([config])
+ */
+/**
+ * config 종류
+ * https://github.com/axios/axios
+ * 'Request Config' 검색
+ */
+export async function axiosApi(
+  url: string,
+  method:
+    | "GET"
+    | "POST"
+    | "PUT"
+    | "DELETE"
+    | "get"
+    | "post"
+    | "put"
+    | "delete" = "GET",
+  data: object,
+  options = {},
+  baseURL = `${API_URL}`
+) {
+  try {
+    const _method = method.toLowerCase();
+    data =
+      _method === "get"
+        ? { ...options, params: { ...data } }
+        : _method === "delete"
+        ? { ...options, data }
+        : data;
+
+    if (IS_DEV) {
+      const _startTime = new Date().getTime();
+      try {
+        const res = await apiHandler.request({
+          method: _method as Method,
+          url: baseURL + url,
+          data,
+          ...options,
+        });
+        console.log(
+          `[${moment().format("YYYY.MM.DD h:mm:ss")}]` +
+            `[DEV][LOG][axiosApi][respond]`,
+          `[${new Date().getTime() - _startTime}]`,
+          _method,
+          url,
+          data,
+          res
+        );
+        return res;
+      } catch (error: unknown) {
+        const axiosError = error as AxiosError;
+        console.log(
+          `[${moment().format("YYYY.MM.DD h:mm:ss")}]` +
+            `[ERROR][axiosApi][respond]`,
+          `[${new Date().getTime() - _startTime}]`,
+          _method,
+          url,
+          data,
+          axiosError?.response,
+          error
+        );
+        throw error;
+      }
+    } else {
+      const res = await apiHandler.request({
+        method: _method as Method,
+        url: baseURL + url,
+        data,
+        ...options,
+      });
+      return res;
+    }
+  } catch (error) {
+    console.log("axiosApi error", error);
+    throw error;
+  }
+}
+
+export const { CancelToken } = axios;
