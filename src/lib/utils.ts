@@ -82,9 +82,9 @@ export async function axiosApi(
       try {
         const res = await apiHandler.request({
           method: _method as Method,
-          url: baseURL + url,
-          data,
-          ...options,
+          baseURL,
+          url,
+          ...data,
         });
         console.log(
           `[${moment().format("YYYY.MM.DD h:mm:ss")}]` +
@@ -113,9 +113,9 @@ export async function axiosApi(
     } else {
       const res = await apiHandler.request({
         method: _method as Method,
-        url: baseURL + url,
-        data,
-        ...options,
+        baseURL,
+        url,
+        ...data,
       });
       return res;
     }
