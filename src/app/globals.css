@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import 'weather-icons/css/weather-icons.css';
-
+@import "../../public/weather-icons-master/css/weather-icons.css";
 
 @custom-variant dark (&:is(.dark *));
 
